@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(E_ALL ^ E_NOTICE);
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 date_default_timezone_set('Asia/Jakarta');
 
@@ -8,7 +8,7 @@ ini_set('set_time_limit', 300);
 ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', 43200);
 
-define('DEBUG', 1);
+define('DEBUG', 0);
 
 use lib\Blibli\Blibli;
 
@@ -24,34 +24,17 @@ if (is_array($products)) {
     foreach ($products as $item) {
         if ($item->code == 200) {
             foreach ($item->data as $key => $value) {
-                try {
-                    if (!$blibli->chromium_init($value->url, $value->name)) {
-                        $message = "sorry, automation stoped.\n";
-                        $blibli->telegram($message);
-                        echo     $message;
-                        break 2;
-                    }
-
-                    $number[]   = $value->name;
-                    $message    = "order success ".$value->name."\n";
-                    $blibli->telegram($message);
-                    echo    $message;
-                } catch (Exception $error) {
-                    $message = "order failed ".$value->name." description ".$error->getMessage().".\n";
-                    $blibli->chrome_driver_close();
-                    $blibli->taskkill();
-                    $blibli->telegram($message);
-                    echo     $message;
-                }
+                $checkout = $blibli->chromium_init($value->url, $value->name);
                 if (MAX_TESTING != '' && $key == MAX_TESTING) break 2;
             }
         }
     }
 
-    $blibli->chrome_driver_close();
     $blibli->taskkill();
-
-    $message = "\ntotal order success ".@count($number).".\ndata. order ".$blibli->Json('encode', @$number).".\n";
+    $message = "\ntotal order success 0.\ndata. order null.\n";
+    if ($checkout) {
+        $message = "\ntotal order success ".$checkout['total'].".\ndata. order ".$checkout['data'].".\n";
+    }
     $blibli->telegram($message);
     echo     $message;
 

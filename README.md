@@ -4,7 +4,7 @@ blibli-auto-checkout-flash-sale
 Auto Checkout Flash Sale Blibli
 
 ### Getting started
-1. blibli login username and password in the edit file **inc/config** name *USER* and *PASSWORD*
+1. blibli login username and password in the edit file **inc/config** name *ACCOUNT*
 2. get token and userid telegram
 ```
 - in the search menu enter @botFather, then please click on the account.

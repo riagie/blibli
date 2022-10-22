@@ -17,14 +17,19 @@ define('VERSION', '1.0.0');
 define('ROOT', dirname(dirname(__FILE__)). '/' );
 define("LIB", "lib/");
 define('CACHE', ROOT . LIB . '\chromium\cache');
-define('CHROMIUM', ROOT . LIB . '\chromium\chromium.exe');
+define('DRIVER', 'chromium_');
+define('CHROMIUM', ROOT . LIB . '\chromium\chromium_##.exe');
 define('CHROME_DRIVER', ROOT . LIB . '\chromium\chromedriver.exe');
 
 /**
  * API CONFIG CONFIGURATION
 */
-define('USER',      'gzymlrnnkprn@spacehotline.com');
-define('PASSWORD',  '1Gzymlrnnkprn');
+define('ACCOUNT', serialize(
+    array (
+        'gzymlrnnkprn@spacehotline.com|1Gzymlrnnkprn',
+        'abcdferrtt@gmail.com|12345'
+    )
+));
 define('VOUCHER',   'BCABLI-OCT22');
 define('TELEGRAM',  '5643108304:AAGzVbsx7bA4omnYlrPT2yYAWxCHqXpGzDk');
 define('T_ID',      '326540542');
@@ -65,7 +70,9 @@ define('ELEMENT_LOADING',       "Loading");
 
 define('MAX_TIMEOUT',   30);
 define('MAX_SLEEP',     30);
-define('MAX_TESTING',   '');
+define('MIN_SLEEP',     5);
+define('MAX_TESTING',   '0');
+define('RETRY',         1);
 
 define('ERROR',     3); // fatal
 define('INFO',      3); // result

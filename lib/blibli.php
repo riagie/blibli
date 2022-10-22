@@ -200,7 +200,7 @@ class Blibli extends Chromium
         }
 
         if (empty($json)) {
-            $services = new Services_JSON(SERVICES_JSON_SUPPRESS_ERRORS);
+            $services = new \Services_JSON(SERVICES_JSON_SUPPRESS_ERRORS);
             $json = $services->$convert($string);
         }
 
@@ -213,8 +213,7 @@ class Blibli extends Chromium
         if (DEBUG == 1) {
             error_log('[' . date("D M j H:i:s Y", time()) . '][INFO] ' . $string . "\n", INFO, LOGS_INFO);
             
-            // print_r(PHP_EOL); var_dump($string); print_r(PHP_EOL);
-            var_dump($string);
+            print_r($string);
         }
     }
 }
