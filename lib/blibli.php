@@ -27,7 +27,7 @@ class Blibli extends Chromium
     const BASE_TELEGRAM = 'https://api.telegram.org/bot'.TELEGRAM.'/sendMessage?';
 
     const PAGE = 1;
-    const GROUP_ID = PRODUCT_GROUP;
+    const GROUP_ID = GROUP;
     const ITEM_PER_PAGE = 1;
     public $total_item = false;
     public $page = false;
@@ -38,7 +38,7 @@ class Blibli extends Chromium
     {
         require('lib/Json.php');
         parent::__construct();
-        $this->PRODUCT = PRODUCT.
+        $this->PRODUCT = FLASHSALE.
             "?page=".self::PAGE.
             "&group_id=".self::GROUP_ID.
             "&item_per_page=".self::ITEM_PER_PAGE;
@@ -66,7 +66,7 @@ class Blibli extends Chromium
                 $this->page = $page;
             }
 
-            $this->PRODUCT = PRODUCT."?page=".$this->page."&group_id=".self::GROUP_ID.
+            $this->PRODUCT = FLASHSALE."?page=".$this->page."&group_id=".self::GROUP_ID.
             "&item_per_page=".$this->total_item;
 
             $this->blibli_init($this->PRODUCT);

@@ -9,29 +9,34 @@ use Facebook\WebDriver\Chrome\ChromeDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 
+use Facebook\WebDriver\WebDriverKeys;
+
 class Chromium 
 {
-    public $options;
-    public $capabilities;
-    public $chrome_driver = false;
+    // public $options;
+    // public $capabilities;
+    public $driver = false;
     public $element;
-    public $instance = array();
+    // public $instance = array();
+    // public $loading;
+
+    public $BASE_URL;
+    public $username = false;
+    public $productName;
+    // public $initial;
 
     public function __construct() 
     {
-        $this->BASE_URL = URL;
-        $this->taskkill();
         putenv('WEBDRIVER_CHROME_DRIVER='. CHROME_DRIVER);
-
-        foreach (unserialize(ACCOUNT) as $instance => $value) {
-            if (fopen(str_replace('##', $instance, CHROMIUM), 'r') == false) {
-                copy(str_replace('##', '', CHROMIUM), str_replace('##', $instance, CHROMIUM));
+        foreach (unserialize(ACCOUNT) as $number => $value) {
+            // $number = $number + 1;
+            if (fopen(str_replace('##', $number, CHROMIUM), 'r') == false) {
+                copy(str_replace('##', '', CHROMIUM), str_replace('##', $number, CHROMIUM));
             }
-
-            $this->chrome_driver[$instance]  = $chrome_driver;
-            $this->options[$instance]        = new ChromeOptions;
-            $this->options[$instance]->setBinary(str_replace('##', $instance, CHROMIUM));
-            $this->options[$instance]->addArguments([
+            
+            $options[$number] = new ChromeOptions;
+            $options[$number]->setBinary(str_replace('##', $number, CHROMIUM));
+            $options[$number]->addArguments([
                 '--disable-blink-features=AutomationControlled',
                 '--disable-notifications',
                 '--disable-infobars',
@@ -39,186 +44,251 @@ class Chromium
                 '--window-size=0,700',
                 '--window-position=0,0',
                 '--force-device-scale-factor=0.5',
-                '--user-data-dir='.CACHE.'/'.DRIVER.$instance,
+                '--user-data-dir='.CACHE.'/'.DRIVER.$number,
                 '--no-sandbox',
                 // '--headless',
             ]);
-
-            $this->capabilities[$instance]   = new DesiredCapabilities;
-            $this->capabilities[$instance]->setCapability(ChromeOptions::CAPABILITY_W3C, $this->options[$instance]);
-
-            if ($this->chrome_driver[$instance] == false || strpos($this->tasklist(), 'No tasks')) {
-                $this->chrome_driver[$instance] = ChromeDriver::start($this->capabilities[$instance]);
+            
+            $capabilities[$number] = new DesiredCapabilities;
+            $capabilities[$number]->setCapability(ChromeOptions::CAPABILITY_W3C, $options[$number]);
+            $this->driver[$number] = $driver;
+            if ($this->driver[$number] == false) {
+                $this->driver[$number] = ChromeDriver::start($capabilities[$number]);
             }
         }
     }
 
     public function chromium_init($url, $name) 
     {
-        foreach (unserialize(ACCOUNT) as $instance => $value) {
+        foreach (unserialize(ACCOUNT) as $number => $value) {
             $account = explode('|', $value);
-            if (count($account) != 2 || array_search($instance, $this->instance)) continue;
-            $this->instance[$instance] = $instance;
-            
-            try {
-                if ($this->checkout($instance, $url, $name, $account[0], $account[1])) {
-                    $data[]     = $name;
-                    $message    = "order success ".$name."\n";
-                    echo    $message;
-                    $this->telegram($message);
+            if (count($account) != 2 || $this->username) continue;
 
-                    $this->instance[$instance] = $name;
-                    unset($this->instance[$instance]);
-                }
-            } catch (Exception $error) {
-                $message = "order failed ".$name." description ".$error->getMessage().".\n";
-                echo     $message;
-                $this->telegram($message);
-                $this->chrome_driver_close($instance);
+            $this->BASE_URL = $url;
+            $this->username = $account[0];
+            $this->productName = $name;
+
+            if ($this->checkout($number, $account[1])) {
+                $data[] = $name;
+                $this->telegram("order success ".$name."\n");
+                unset($this->username);
+            } else {
+                $this->telegram("order failed ".$name.".\n");
+                unset($this->username);
             }
         }
 
-        if ($data == true) {
-            return array (
-                'total' => count($data),
-                'data'  => $this->Json('encode', $data),
-            );
-        }
+        if ($data) return array ('total' => count($data), 'data'  => $this->Json('encode', $data));
 
         return false;
     }
 
-    public function checkout($instance, $url, $name, $username, $password)
+    public function login($driver, $password) 
     {
-        $this->chrome_driver[$instance]->get($this->BASE_URL.$url);
-        $this->timeouts($instance);
-        $this->element = $this->chrome_driver_by($instance, 'xpath', CHECKOUT)->click();
-        $this->element_loading($instance);
-        
-        if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerText'), LOGIN_PRE)) {
-            $this->element = $this->chrome_driver_by($instance, 'xpath', LOGIN_USER)->sendKeys($username);
-            $this->element = $this->chrome_driver_by($instance, 'xpath', LOGIN_PASSWORD)->sendKeys($password);
-            $this->element = $this->chrome_driver_by($instance, 'xpath', LOGIN_SUBMIT)->click();
-            $this->element_loading($instance);
-
-            if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerText'), LOGIN_OTP)) {
-                $this->element = $this->chrome_driver_by($instance, 'xpath', LOGIN_OTP_SUBMIT)->click();
-                $this->element_loading($instance);
-                sleep(MAX_SLEEP);
-                if (RETRY == 1) { 
-                    $this->checkout($instance, $url, $name, $username, $password);
-                }
+        if (strpos($this->Element($driver), LOGIN)) {
+            $driver->findElement(WebDriverBy::xpath(USER))->sendKeys($this->username);
+            $driver->findElement(WebDriverBy::xpath(PASSWORD))->sendKeys($password);
+            $driver->findElement(WebDriverBy::xpath(LOGIN_IN))->click();
+            $this->Element($driver);
+            if (strpos($this->Element($driver), LOGIN_ERR) || 
+                strpos($this->Element($driver), LOGIN_ERR2) || 
+                strpos($this->Element($driver), LOGIN_ERR3)) {
+                $this->DEBUG($this->username." LOGIN_ERR/LOGIN_ERR2/LOGIN_ERR3.\n", true);
+                $this->telegram($this->username." LOGIN_ERR/LOGIN_ERR2/LOGIN_ERR3.\n");
 
                 return false;
             }
 
-            $this->chrome_driver[$instance]->get($this->BASE_URL.$url);
-            $this->element = $this->chrome_driver_by($instance, 'xpath', CHECKOUT)->click();
-            $this->element_loading($instance);
+            if (strpos($this->Element($driver), OTP)) {
+                $driver->findElement(WebDriverBy::xpath(OTP_IN))->click();
+                $this->Element($driver);
+                $this->telegram($this->username." OTP_IN.\n");
+                if (MAX_RETRY == 0) {
+                    return false;
+                }
+
+                sleep(MAX_SLEEP);
+                $driver->get($driver->getCurrentUrl());
+                $this->Element($driver);
+                $this->login($driver, $password);
+            }
+            
+            return true;
+        }
+
+        $element = $driver->findElement(WebDriverBy::xpath(VALIDATION));
+        $element = $element->getDomProperty('baseURI');
+        if (strpos($element, '/verify-phone-number')) {
+            if (strpos($this->Element($driver), PHONE_PASS)) {
+                $driver->findElement(WebDriverBy::xpath(PHONE_PASS_IN))->click();
+                $this->Element($driver);
+
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    public function checkout($number, $password)
+    {
+        $driver = $this->driver[$number];
+        $driver->get($this->BASE_URL);
+        $driver->manage()->timeouts()->implicitlyWait(MAX_TIMEOUT);
+        if ($this->Loading($driver, $this->BASE_URL) == false) {
+            return false;
         }
         
-        if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerText'), PHONE_VERIFICATION)) {
-            $this->element = $this->chrome_driver_by($instance, 'xpath', PHONE_NOTIFICATION)->click();
-            $this->element_loading($instance);
-        }
-
-        if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerHTML'), ADDRESS_VERIFICATION)) {
-            $this->element = $this->chrome_driver_by($instance, 'xpath', ADDRESS_SUBMIT)->click();
-            $this->element_loading($instance);
-        }
-
-        if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerHTML'), CHECKOUT_OVER)) {
-            $this->DEBUG('instance '.$instance.' checkout CHECKOUT_OVER', true);
-            
+        if (strpos($this->Element($driver), OUT_OF_STOCK) || 
+            strpos($this->Element($driver), OUT_OF_READY)) {
+            $this->telegram($number." ".$this->productName." OUT_OF_STOCK/OUT_OF_READY.\n");
             return false;
         }
 
-        if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerHTML'), VOUCHERS_NOTIFICATION) === false) {
-            $this->element = $this->chrome_driver_by($instance, 'xpath', VOUCHERS_PRE)->click();
-            $this->element_loading($instance);
-
-            $this->element = $this->chrome_driver_by($instance, 'xpath', VOUCHERS)->sendKeys(VOUCHER);
-            $this->element = $this->chrome_driver_by($instance, 'xpath', VOUCHERS_SUBMIT)->click();
-            $this->refresh();
-            $this->element_loading($instance);
-        }
-
-        $this->element = $this->chrome_driver_by($instance, 'xpath', SHIPMENT_SUBMIT)->click();
-        $this->element_loading($instance);
-
-        $this->element = $this->chrome_driver_by($instance, 'xpath', PAYMENT_SUBMIT)->click();
-        $this->element_loading($instance);
-        
-        if (strpos($this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerHTML'), PAYMENT_OPTION) === false) {
-            $this->element = $this->chrome_driver_by($instance, 'xpath', PAYMENT_SELECT)->click();
-            $this->element = $this->chrome_driver_by($instance, 'xpath', PAYMENT_SELECT_SUBMIT)->click();
-            $this->element_loading($instance);
-        }
-
-        $this->element = $this->chrome_driver_by($instance, 'xpath', PAYMENT_NOW)->click();
-        $this->element_loading($instance);
-        
-        return true;
-    }
-
-    public function chrome_driver_by($instance, $mechanism, $value = false) 
-    {
-        $mechanism = (is_string($mechanism)) ? strval($mechanism):$mechanism;
-        if ($value == true) {
-            return $this->chrome_driver[$instance]->findElement(WebDriverBy::$mechanism($value));
-        }
-
-        return $this->chrome_driver[$instance]->findElement(WebDriverBy::$mechanism());
-    }
-
-    public function refresh()
-    {
-        return $this->chrome_driver->get($this->chrome_driver->getCurrentUrl());
-    }
-
-    public function element_loading($instance)
-    {
-        if ($this->instance[$instance] == false) {
-            sleep(MIN_SLEEP);
-        }
-        sleep(1);
-        $element = $this->chrome_driver_by($instance, 'xpath', VALIDATION)->getDomProperty('innerText');
-        if (strpos($element, ELEMENT_LOADING)) {
-            $this->element_loading($instance);
+        if (PRODUCT == '') {
+            $driver->findElement(WebDriverBy::xpath(CHECKOUT))->click();
+            $this->Element($driver);
+            if ($this->login($driver, $password) == false) {
+                return false;
+            }
+            $this->Element($driver);
+        } else {
+            $driver->findElement(WebDriverBy::xpath(ADD_TO_BAG))->click();
+            $driver->findElement(WebDriverBy::xpath(BAG_IN))->click();
+            $driver->get(CART);
+            $driver->manage()->timeouts()->implicitlyWait(MAX_TIMEOUT);
+            $this->Element($driver);
+            if ($this->login($driver, $password) == false) {
+                return false;
+            }
+            $this->Element($driver);
+            if ($this->Loading($driver, '/cart') == false) {
+                return false;
+            }
+            $cart = $driver->findElement(WebDriverBy::xpath(CART_QTY));
+            $cart->click();
+            $cart->sendKeys(WebDriverKeys::END);
+            $cart->sendKeys(WebDriverKeys::BACKSPACE);
+            $cart->sendKeys(WebDriverKeys::BACKSPACE);
+            $cart->sendKeys(WebDriverKeys::BACKSPACE);
+            $cart->sendKeys(WebDriverKeys::BACKSPACE);
+            $cart->sendKeys(QTY);
+            $driver->findElement(WebDriverBy::xpath(CART_CHECKOUT))->click();
+            $this->Element($driver);
         }
         
-        return true;
-    }
-
-    public function timeouts($instance, $string = false, $second = MAX_TIMEOUT)
-    {
-        if ($string == true) {
-            return $this->chrome_driver[$instance]->wait()->until($string);
+        if (strpos($this->Element($driver), ADDRESS_ERR)) {
+            $driver->findElement(WebDriverBy::xpath(ADDRESS_IN))->click();
+            $this->Element($driver);
         }
 
-        return $this->chrome_driver[$instance]->manage()->timeouts()->implicitlyWait($second);
-    }
+        if (strpos($this->Element($driver), CHECKOUT_OVER)) {
+            $this->DEBUG($this->username." CHECKOUT_OVER.\n", true);
+            $this->telegram($this->username." CHECKOUT_OVER.\n");
 
-    public function chrome_driver_close($instance)
-    {
-        if ($this->chrome_driver[$instance] == true) {
-            return $this->chrome_driver[$instance]->quit();
+            return false;
+        }
+        
+        if ($this->Loading($driver, '/shipment') == false) {
+            return false;
+        }
+
+        if (strpos($this->Element($driver), PHONE_ERR)) {
+            if (strpos($this->Element($driver), PHONE_ERR2)) {
+                $driver->findElement(WebDriverBy::xpath(PHONE_IN))->click();
+                $this->Element($driver);
+            }
+        }
+
+        if (strpos($this->Element($driver), VOUCHERS_ERR) || 
+            strpos($this->Element($driver), VOUCHERS_ERR2)) {
+                $driver->findElement(WebDriverBy::xpath(VOUCHERS_IN))->click();
+                $this->Element($driver);
+                $driver->findElement(WebDriverBy::xpath(VOUCHERS))->sendKeys(VOUCHER);
+                $driver->findElement(WebDriverBy::xpath(PAKAI))->click();
+                $driver->get($driver->getCurrentUrl());
+                $this->Element($driver);
+        }
+
+        if (strpos($this->Element($driver), SHIPMENT_ERR)) {
+            $driver->findElement(WebDriverBy::xpath(SHIPMENT_IN))->click();
+            $this->Element($driver);
+        }
+
+        if ($this->Loading($driver, '/payment') == false) {
+            return false;
+        }
+
+        if (strpos($this->Element($driver), PAYMENT_METHOD_ERR)) {
+            $driver->findElement(WebDriverBy::xpath(PAYMENT_METHOD_IN))->click();
+            $this->Element($driver);
+            $shipment = $driver->findElement(WebDriverBy::xpath(PAYMENT_METHOD_SELECT))->click();
+            $this->Element($driver);
+            $shipment = $driver->findElement(WebDriverBy::xpath(PAYMENT_SELECT_IN))->click();
+            $this->Element($driver);
+        }
+
+        if (strpos($this->Element($driver), PAYMENT_ERR)) {
+            $driver->findElement(WebDriverBy::xpath(PAYMENT_IN))->click();
+            $this->Element($driver);
+        }
+
+        if (strpos($this->Element($driver), THANKYOU)) {
+            return true;
         }
 
         return false;
     }
 
-    public function taskkill()
+    public function Loading($driver, $URI, $maxRetry = 0)
     {
-        if (strpos($this->tasklist(), 'No tasks') === false) {
-            return shell_exec('taskkill /F /IM "' . DRIVER . '*"');
+        $driver->manage()->timeouts()->implicitlyWait(MAX_TIMEOUT);
+        $element = $driver->findElement(WebDriverBy::xpath(VALIDATION));
+        $element = urldecode($element->getDomProperty('baseURI'));
+        $element = preg_replace('/\s+/', '+', $element);
+        if (strpos($element, $URI) === false) {
+            if ($maxRetry == MAX_RETRY) {
+                return false;
+            }
+            sleep(MIN_SLEEP);
+            $maxRetry   = $maxRetry + 1;
+            $element    = $this->Loading($driver, $URI, $maxRetry);
         }
 
-        return true;
+        return $element;
     }
 
-    public function tasklist()
+    public function Element($driver)
     {
-        return shell_exec('tasklist /v /fo csv /fi "IMAGENAME eq ' . DRIVER . '*"');
+        $driver->manage()->timeouts()->implicitlyWait(MAX_TIMEOUT);
+        $element = $driver->findElement(WebDriverBy::xpath(VALIDATION));
+        $element = $element->getDomProperty('innerText');
+        if (strpos($element, LOADING)) {
+            sleep(MIN_SLEEP);
+            $element = $this->Element($driver);
+        }
+        
+        return $element;
+    }
+
+    public function driverClose($driver)
+    {
+        return $driver->quit();
+    }
+
+    public function taskKill()
+    {
+        $taskkill = 'taskkill /F /IM "' . DRIVER . '*"';
+        if (strpos($this->taskList(), 'No tasks')) {
+            return true;
+        }
+        
+        return shell_exec($taskkill);
+    }
+
+    public function taskList()
+    {
+        $tasklist = 'tasklist /v /fo csv /fi "IMAGENAME eq ' . DRIVER . '*"';
+        return shell_exec($tasklist);
     }
 }
