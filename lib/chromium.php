@@ -13,20 +13,15 @@ use Facebook\WebDriver\WebDriverKeys;
 
 class Chromium 
 {
-    // public $options;
-    // public $capabilities;
     public $driver = false;
     public $element;
-    // public $instance = array();
-    // public $loading;
-
     public $BASE_URL;
     public $username = false;
     public $productName;
-    // public $initial;
 
     public function __construct() 
     {
+        $this->taskKill();
         putenv('WEBDRIVER_CHROME_DRIVER='. CHROME_DRIVER);
         foreach (unserialize(ACCOUNT) as $number => $value) {
             // $number = $number + 1;
@@ -61,6 +56,7 @@ class Chromium
     public function chromium_init($url, $name) 
     {
         foreach (unserialize(ACCOUNT) as $number => $value) {
+            // $number = $number + 1;
             $account = explode('|', $value);
             if (count($account) != 2 || $this->username) continue;
 
