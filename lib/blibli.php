@@ -36,7 +36,7 @@ class Blibli extends Chromium
 
     public function __construct() 
     {
-        require('lib/Json.php');
+        require('Json.php');
         parent::__construct();
         $this->PRODUCT = FLASHSALE.
             "?page=".self::PAGE.
