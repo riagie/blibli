@@ -26,22 +26,23 @@ define('CHROME_DRIVER', ROOT . LIB . '\chromium\chromedriver.exe');
 */
 define('ACCOUNT', serialize(
     array (
-        'wvlrzntcm@spacehotline.com|1Wvlrzntcm',
-        'wvlrzntcm1@spacehotline.com|1Wvlrzntcm'
+        // 'wvlrzntcm@spacehotline.com|1Wvlrzntcm'
+        'ogie.nurdiana447@gmail.com|0913dian'
     )
 ));
-define('VOUCHER',   'KODEVOUCHER22');
-define('TELEGRAM',  '5729973270:AAG7F1kS33JDFyoQFY1LGOcmDUhfFybDvr8');
-define('T_ID',      '326540542');
+define('VOUCHER', 'KODEVOUCHER22');
+define('TELEGRAM', '5729973270:AAG7F1kS33JDFyoQFY1LGOcmDUhfFybDvr8');
+define('T_ID', '326540542');
 
 /**
  * API GLOBAL URL
  */
-define('BASE_URL',  "https://www.blibli.com");
+define('BASE_URL', "https://www.blibli.com");
 define('FLASHSALE', "https://www.blibli.com/backend/content/flashsale/products");
-define('GROUP',     "");
-define('PRODUCT',   "https://www.blibli.com/p/ultra-voucher-digital-code-rp100-000/ps--VOC-45551-00317?ds=VOC-45551-00317-00001&source=SEARCH&sid=ad58c772385e4cb3&cnc=false&pickupPointCode=PP-3013654&pid=VOC-45551-00317&tag=trending");
-define('QTY',       50);
+define('GROUP', "");
+define('PRODUCT', "https://www.blibli.com/p/ultra-voucher-digital-code-rp100-000/ps--VOC-45551-00317?ds=VOC-45551-00317-00001&source=SEARCH&sid=ad58c772385e4cb3&cnc=false&pickupPointCode=PP-3013654&pid=VOC-45551-00317&tag=trending");
+define('QTY', 50);
+define('KartuKreditDebit', 1);
 
 /**
  * API GLOBAL CONFIGURATION
