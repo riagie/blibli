@@ -140,6 +140,18 @@ class Chromium
         return true;
     }
 
+    public function AutoRepeatClicker($driver, $maxRetry = 0)
+    {
+        $driver->findElement(WebDriverBy::xpath(PAKAI))->click();
+        $Element = $this->Element($driver);
+        if ($maxRetry != Clicker) {
+            $maxRetry   = $maxRetry + 1;
+            $element    = $this->AutoRepeatClicker($driver, $maxRetry);
+        }
+        
+        return true;
+    }
+
     public function Order($number, $password)
     {
         $driver = $this->driver[$number];
@@ -220,6 +232,9 @@ class Chromium
 
             $driver->findElement(WebDriverBy::xpath(VOUCHERS))->sendKeys(VOUCHER);
             $driver->findElement(WebDriverBy::xpath(PAKAI))->click();
+            if (Clicker > 1) {
+                $this->AutoRepeatClicker($driver);
+            };
             sleep(MIN_SLEEP);
             if (strpos($this->Element($driver), VOUCHERS_ERR4) ||
                 strpos($this->Element($driver), VOUCHERS_ERR5)) {
