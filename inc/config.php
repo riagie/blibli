@@ -43,6 +43,7 @@ define('GROUP', "");
 define('PRODUCT', "https://www.blibli.com/p/ultra-voucher-digital-code-rp100-000/ps--VOC-45551-00317?ds=VOC-45551-00317-00001&source=SEARCH&sid=ad58c772385e4cb3&cnc=false&pickupPointCode=PP-3013654&pid=VOC-45551-00317&tag=trending");
 define('QTY', 50);
 define('KartuKreditDebit', 1);
+define('Clicker', 10);
 
 /**
  * API GLOBAL CONFIGURATION
