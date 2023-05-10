@@ -1,4 +1,4 @@
-blibli-auto-checkout-flash-sale
+Blibli-Flash-Sale
 ==
 
 Auto Checkout Flash Sale Blibli
